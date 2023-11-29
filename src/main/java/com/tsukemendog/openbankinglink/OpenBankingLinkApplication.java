@@ -1,7 +1,10 @@
 package com.tsukemendog.openbankinglink;
 
 import com.tsukemendog.openbankinglink.entity.Customer;
+import com.tsukemendog.openbankinglink.entity.RssFeed;
 import com.tsukemendog.openbankinglink.repository.CustomerRepository;
+import com.tsukemendog.openbankinglink.repository.RssFeedRepository;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -12,8 +15,14 @@ import org.springframework.core.env.Environment;
 
 import lombok.extern.log4j.Log4j2;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 @Log4j2
 @SpringBootApplication
+@EnableBatchProcessing
 public class OpenBankingLinkApplication {
 
     public static void main(String[] args) {
@@ -27,9 +36,10 @@ public class OpenBankingLinkApplication {
         };
     }
 
+    //https://openjdk.org/groups/net/httpclient/recipes.html httpclient 레시피
     @Bean
     @Profile("dev")
-    public CommandLineRunner demo(CustomerRepository repository) {
+    public CommandLineRunner demo(CustomerRepository repository, RssFeedRepository rssFeedRepository) {
         return (args) -> {
             // save a few customers
             repository.save(new Customer("Jack", "Bauer"));
@@ -60,6 +70,22 @@ public class OpenBankingLinkApplication {
                 log.info(bauer.toString());
             });
             log.info("");
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://screenrant.com/feed/movie-news/"))
+                    .build();
+
+            HttpResponse<String> response =
+                    client.send(request, HttpResponse.BodyHandlers.ofString());
+
+
+            System.out.println(response.body());
+
+            rssFeedRepository.save(RssFeed.builder()
+                            .code("movie")
+                            .content(response.body())
+                    .build());
         };
     }
 
