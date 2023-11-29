@@ -1,0 +1,11 @@
+ifndef::snippets[]
+:snippets: ./build/generated-snippets
+endif::[]
+
+== REQUEST
+
+include::{snippets}/my-ascii/http-request.adoc[]
+
+== RESPONSE
+
+include::{snippets}/my-ascii/http-response.adoc[]
