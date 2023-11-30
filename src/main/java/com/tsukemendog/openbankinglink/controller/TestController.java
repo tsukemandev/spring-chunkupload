@@ -40,6 +40,9 @@ public class TestController {
         Optional<RssFeed> rssFeed = Optional.empty();
         if ("movie".equals(code)) {
             rssFeed = rssFeedRepository.findByCode("movie");
+
+
+
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_RSS_XML);
