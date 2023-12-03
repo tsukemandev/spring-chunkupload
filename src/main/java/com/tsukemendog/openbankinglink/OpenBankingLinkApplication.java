@@ -1,10 +1,17 @@
 package com.tsukemendog.openbankinglink;
 
+import com.apptasticsoftware.rssreader.Channel;
+import com.apptasticsoftware.rssreader.Image;
+import com.apptasticsoftware.rssreader.Item;
+import com.apptasticsoftware.rssreader.RssReader;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tsukemendog.openbankinglink.entity.Customer;
 import com.tsukemendog.openbankinglink.entity.RssFeed;
 import com.tsukemendog.openbankinglink.repository.CustomerRepository;
 import com.tsukemendog.openbankinglink.repository.RssFeedRepository;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import com.tsukemendog.openbankinglink.vo.RssFeedItem;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -19,10 +26,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log4j2
 @SpringBootApplication
-@EnableBatchProcessing
 public class OpenBankingLinkApplication {
 
     public static void main(String[] args) {
@@ -69,24 +86,83 @@ public class OpenBankingLinkApplication {
             repository.findByLastName("Bauer").forEach(bauer -> {
                 log.info(bauer.toString());
             });
-            log.info("");
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://screenrant.com/feed/movie-news/"))
-                    .build();
-
-            HttpResponse<String> response =
-                    client.send(request, HttpResponse.BodyHandlers.ofString());
 
 
-            System.out.println(response.body());
+            var list = new ArrayList<>();
+            ObjectMapper objectMapper = new ObjectMapper();
+            RssReader rssReader = new RssReader();
+
+            log.info("===================================================");
+            rssReader.read("https://screenrant.com/feed/movie-news/").collect(Collectors.toList()).forEach(el -> {
+
+                String pubDate;
+                LocalDateTime givenDateTime = getPubLocalDate(el.getPubDate().orElse(""));
+
+                if (givenDateTime == null) {
+                    pubDate = "";
+                } else {
+
+                    // 현재의 GMT 기준 시각을 가져오기
+                    Instant currentGMT = Instant.now();
+
+                    // GMT 기준 시각을 사용하여 LocalDateTime 객체로 변환
+                    LocalDateTime currentDateTime = LocalDateTime.ofInstant(currentGMT, ZoneId.of("GMT"));
+
+                    //주어진 LocalDateTime 객체와 현재 시간 사이의 차이 (분 단위)
+                    long minutesAgo = ChronoUnit.MINUTES.between(givenDateTime, currentDateTime);
+
+
+                    System.out.println(minutesAgo + "분전");
+
+
+                }
+
+
+
+                list.add(RssFeedItem.builder()
+                                .title(el.getTitle().orElse(""))
+                                .description(el.getDescription().orElse(""))
+                                .author(el.getAuthor().orElse(""))
+                                .link(el.getLink().orElse(""))
+                                .parmaLink(el.getIsPermaLink().orElse(false))
+                                .pubDate(el.getPubDate().orElse(""))
+                                .comments(el.getComments().orElse(""))
+                                .category(el.getCategories())
+                                .guid(el.getGuid().orElse(""))
+                                .channelTitle(el.getChannel().getTitle())
+                        .build());
+
+
+            });
+
+
+
+
+
+            log.info("RSS Feed 획득 완료");
+            log.info("===================================================");
 
             rssFeedRepository.save(RssFeed.builder()
                             .code("movie")
-                            .content(response.body())
+                            .content(objectMapper.writeValueAsString(list))
                     .build());
         };
+    }
+
+
+    public LocalDateTime getPubLocalDate(String dateString) {
+        if ("".equals(dateString)) {
+            return null;
+        }
+        // DateTimeFormatter 정의 (주어진 날짜 형식에 맞춰야 함)
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
+
+        // 문자열을 ZonedDateTime으로 파싱
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateString, formatter);
+
+        // ZonedDateTime을 LocalDateTime으로 변환
+        return zonedDateTime.toLocalDateTime();
+
     }
 
 }

@@ -17,14 +17,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+
 @RestController
 public class TestController {
-
-    @Autowired
-    private JobLauncher jobLauncher;
-
-    @Autowired
-    private Job processJob;
 
     @Autowired
     private RssFeedRepository rssFeedRepository;
@@ -40,26 +35,15 @@ public class TestController {
         Optional<RssFeed> rssFeed = Optional.empty();
         if ("movie".equals(code)) {
             rssFeed = rssFeedRepository.findByCode("movie");
-
-
-
         }
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_RSS_XML);
-        headers.setAccessControlAllowOrigin("*");
-        headers.setAccessControlAllowMethods(Arrays.asList(HttpMethod.GET, HttpMethod.POST));
-        headers.setAccessControlAllowHeaders(Arrays.asList("Content-Type", "Authorization"));
-        headers.setAccessControlAllowCredentials(true);
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
         return new ResponseEntity<>(rssFeed.map(RssFeed::getContent).orElse("Empty"), headers, HttpStatus.OK);
     }
 
     @GetMapping("/invokejob")
     public String handle() throws Exception {
-
-        JobParameters jobParameters = new JobParametersBuilder().addLong("time", System.currentTimeMillis())
-                .toJobParameters();
-        jobLauncher.run(processJob, jobParameters);
 
         return "Batch job has been invoked";
     }
