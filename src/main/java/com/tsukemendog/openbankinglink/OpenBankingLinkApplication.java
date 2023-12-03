@@ -12,6 +12,9 @@ import com.tsukemendog.openbankinglink.entity.RssFeed;
 import com.tsukemendog.openbankinglink.repository.CustomerRepository;
 import com.tsukemendog.openbankinglink.repository.RssFeedRepository;
 import com.tsukemendog.openbankinglink.vo.RssFeedItem;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -22,10 +25,6 @@ import org.springframework.core.env.Environment;
 
 import lombok.extern.log4j.Log4j2;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -33,9 +32,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -110,14 +107,7 @@ public class OpenBankingLinkApplication {
 
                     //주어진 LocalDateTime 객체와 현재 시간 사이의 차이 (분 단위)
                     long minutesAgo = ChronoUnit.MINUTES.between(givenDateTime, currentDateTime);
-
-
-                    System.out.println(minutesAgo + "분전");
-
-
                 }
-
-
 
                 list.add(RssFeedItem.builder()
                                 .title(el.getTitle().orElse(""))

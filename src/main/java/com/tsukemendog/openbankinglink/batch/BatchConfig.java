@@ -1,12 +1,20 @@
 package com.tsukemendog.openbankinglink.batch;
 
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,10 +34,15 @@ public class BatchConfig {
     private Resource outputTxt;
 
     @Autowired
-    private DataSource dataSource;
+    private PlatformTransactionManager platformTransactionManager;
+
 
     @Autowired
-    private PlatformTransactionManager platformTransactionManager;
+    private StepBuilderFactory steps;
+
+    @Autowired
+    private JobBuilderFactory jobs;
+
 
     @Bean
     public Reader itemReader()
@@ -47,6 +60,22 @@ public class BatchConfig {
             throws UnexpectedInputException, ParseException {
         return new Writer();
     }
+
+    @Bean
+    public Job job(@Qualifier("step1") Step step1) {
+        return jobs.get("myJob").start(step1).build();
+    }
+
+    @Bean
+    protected Step step1() {
+        return steps.get("step1")
+                .<String, String> chunk(10)
+                .reader(new Reader())
+                .processor(new Processor())
+                .writer(new Writer())
+                .build();
+    }
+
 
 
     @Bean
