@@ -6,31 +6,26 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
-import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.*;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionManager;
 
-import javax.sql.DataSource;
+import java.util.Arrays;
 
 //https://www.javainuse.com/spring/bootbatch 스프링 배치 간략설명
 @Configuration
 @EnableBatchProcessing
 public class BatchConfig {
 
-    @Value("file:text.txt")
+    @Value("file:../../../../../resources/test/text.txt")
     private Resource outputTxt;
 
     @Autowired
@@ -56,9 +51,14 @@ public class BatchConfig {
         return new Processor();
     }
     @Bean
-    public Writer itemWriter()
-            throws UnexpectedInputException, ParseException {
-        return new Writer();
+    public FlatFileItemWriter<String> itemWriter() {
+        FlatFileItemWriter<String> writer = new FlatFileItemWriter<>();
+        writer.setResource(new FileSystemResource("test/text.txt")); // 출력 파일 경로 설정
+
+        // 각 항목을 한 줄에 쓰기 위해 설정
+        writer.setLineAggregator(new PassThroughLineAggregator<>());
+
+        return writer;
     }
 
     @Bean
@@ -70,9 +70,9 @@ public class BatchConfig {
     protected Step step1() {
         return steps.get("step1")
                 .<String, String> chunk(10)
-                .reader(new Reader())
-                .processor(new Processor())
-                .writer(new Writer())
+                .reader(itemReader())
+                .processor(itemProcessor())
+                .writer(itemWriter())
                 .build();
     }
 

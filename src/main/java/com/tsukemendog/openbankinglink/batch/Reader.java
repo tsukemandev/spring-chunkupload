@@ -9,6 +9,7 @@ public class Reader implements ItemReader<String> {
 
     private final String[] messages = { "javainuse.com",
             "Welcome to Spring Batch Example",
+            "Welcome to Spring Batch Example222",
             "We use H2 Database for this example" };
 
     private int count = 0;
