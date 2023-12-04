@@ -42,13 +42,10 @@ public class Reader implements ItemReader<List<RssFeedItem>> {
         log.info("===================================================");
         rssReader.read("https://screenrant.com/feed/movie-news/").collect(Collectors.toList()).forEach(el -> {
 
-            String pubDate;
+            String pubDate = "";
             LocalDateTime givenDateTime = getPubLocalDate(el.getPubDate().orElse(""));
 
-            if (givenDateTime == null) {
-                pubDate = "";
-            } else {
-
+            if (givenDateTime != null) {
                 // 현재의 GMT 기준 시각을 가져오기
                 Instant currentGMT = Instant.now();
 
@@ -58,12 +55,13 @@ public class Reader implements ItemReader<List<RssFeedItem>> {
                 //주어진 LocalDateTime 객체와 현재 시간 사이의 차이 (분 단위)
                 long minutesAgo = ChronoUnit.MINUTES.between(givenDateTime, currentDateTime);
 
-                if (minutesAgo >= 60) {
-                    pubDate = (minutesAgo / 60) + "시간전";
-                } else {
+                if (minutesAgo < 60) {
                     pubDate = minutesAgo + "분전";
+                } else if (minutesAgo / 60 < 24) {
+                    pubDate = (minutesAgo / 60) + "시간전";
+                } else if (minutesAgo / 60 >= 24) {
+                    pubDate = (minutesAgo / 60) / 24 + "일전";
                 }
-
             }
 
             list.add(RssFeedItem.builder()
