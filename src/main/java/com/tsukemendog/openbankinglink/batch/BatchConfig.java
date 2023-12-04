@@ -1,5 +1,7 @@
 package com.tsukemendog.openbankinglink.batch;
 
+import com.tsukemendog.openbankinglink.entity.RssFeed;
+import com.tsukemendog.openbankinglink.vo.RssFeedItem;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
@@ -19,6 +21,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.Arrays;
+import java.util.List;
 
 //https://www.javainuse.com/spring/bootbatch 스프링 배치 간략설명
 @Configuration
@@ -50,8 +53,14 @@ public class BatchConfig {
             throws UnexpectedInputException, ParseException {
         return new Processor();
     }
+
     @Bean
-    public FlatFileItemWriter<String> itemWriter() {
+    public Writer itemJpaWriter()
+            throws UnexpectedInputException, ParseException {
+        return new Writer();
+    }
+    @Bean
+    public FlatFileItemWriter<String> itemFileWriter() {
         FlatFileItemWriter<String> writer = new FlatFileItemWriter<>();
         writer.setResource(new FileSystemResource("test/text.txt")); // 출력 파일 경로 설정
 
@@ -69,10 +78,10 @@ public class BatchConfig {
     @Bean
     protected Step step1() {
         return steps.get("step1")
-                .<String, String> chunk(10)
+                .<List<RssFeedItem>, RssFeed> chunk(1)
                 .reader(itemReader())
                 .processor(itemProcessor())
-                .writer(itemWriter())
+                .writer(itemJpaWriter())
                 .build();
     }
 
