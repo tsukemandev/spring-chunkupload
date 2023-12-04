@@ -57,7 +57,13 @@ public class Reader implements ItemReader<List<RssFeedItem>> {
 
                 //주어진 LocalDateTime 객체와 현재 시간 사이의 차이 (분 단위)
                 long minutesAgo = ChronoUnit.MINUTES.between(givenDateTime, currentDateTime);
-                pubDate = minutesAgo + "분전";
+
+                if (minutesAgo >= 60) {
+                    pubDate = (minutesAgo / 60) + "시간전";
+                } else {
+                    pubDate = minutesAgo + "분전";
+                }
+
             }
 
             list.add(RssFeedItem.builder()
