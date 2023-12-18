@@ -1,13 +1,17 @@
 package com.tsukemendog.openbankinglink.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tsukemendog.openbankinglink.repository.RssFeedRepository;
 import com.tsukemendog.openbankinglink.security.WebSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
@@ -47,6 +51,13 @@ public class TestControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @MockBean
+    RssFeedRepository rssFeedRepository;
+    @MockBean
+    JobLauncher jobLauncher;
+    @MockBean
+    Job job;
 /*
     @BeforeEach
     void setup() { //text/html;charset=UTF-8
