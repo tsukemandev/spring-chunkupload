@@ -41,7 +41,6 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest({TestController.class, WebSecurityConfig.class})
 @AutoConfigureRestDocs(uriScheme = "http", uriHost = "docs.api-skyclassism.com")
 public class TestControllerTest {
