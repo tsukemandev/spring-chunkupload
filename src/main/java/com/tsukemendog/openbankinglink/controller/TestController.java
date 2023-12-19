@@ -3,6 +3,7 @@ package com.tsukemendog.openbankinglink.controller;
 import com.tsukemendog.openbankinglink.dto.TestDto;
 import com.tsukemendog.openbankinglink.entity.RssFeed;
 import com.tsukemendog.openbankinglink.repository.RssFeedRepository;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
@@ -13,7 +14,17 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 @RestController
@@ -59,14 +70,54 @@ public class TestController {
             @RequestHeader("Chunk-Start") Long chunkStart,
             @RequestHeader("Chunk-End") Long chunkEnd,
             @RequestHeader("File-Name") String fileName,
+            @RequestHeader("Last-Chunk") Boolean isLastChunk,
             @RequestBody byte[] chunkData) {
 
-        System.out.println("chucnk : " + fileName + "    byte : " + new String(chunkData, StandardCharsets.UTF_8));
-        
-        // 청크 데이터 처리 로직 구현
-        // 예: 파일 시스템에 청크 저장, 청크 재조합 등
+        // 이 부분에 청크를 파일로 저장하거나 원하는 처리를 수행할 수 있습니다.
+        try {
+            // 청크를 지정된 파일에 추가 모드로 기록합니다.
+            Path filePath = Paths.get("C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video", fileName); // 업로드
+                                                                                                                   // 디렉토리
+                                                                                                                   // 지정
+            FileOutputStream outputStream = new FileOutputStream(filePath.toString(), true);
+            outputStream.write(chunkData);
+            outputStream.close();
 
-        return ResponseEntity.ok().build();
+            if (isLastChunk) {
+
+                // 디렉토리 경로 설정
+                Path directoryPath = Paths.get("C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video");
+
+                // 디렉토리 내의 파일 수를 카운트
+                long count = countFilesInDirectory(directoryPath);
+                System.out.println("chunk count : " + count);
+
+                List<Path> paths = new ArrayList<>();
+                for (int i = 0; i < count; i++) {
+                    File file = new File(
+                            "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net) (1).mkv"
+                                    + "_chunk_" + i);
+                    if (file.exists()) {
+                        paths.add(Paths.get(
+                                "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net) (1).mkv"
+                                        + "_chunk_" + i));
+                    } else {
+                        break;
+                    }
+                }
+
+                Path outputPath = Paths.get(
+                        "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net).mkv");
+                mergeFiles(paths, outputPath);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to save chunk", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // 성공적인 응답을 반환합니다.
+        return new ResponseEntity<>("Chunk uploaded successfully", HttpStatus.OK);
     }
 
     @PostMapping("/upload2")
@@ -75,6 +126,70 @@ public class TestController {
         System.out.println("file size : " + multipartFile.getSize());
 
         return ResponseEntity.ok("ok");
+    }
+
+    @GetMapping("/merge")
+    public ResponseEntity<String> merge() throws IOException {
+
+        List<Path> paths = new ArrayList<>();
+
+        for (int i = 0; i < 500; i++) {
+            File file = new File(
+                    "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net) (1).mkv"
+                            + "_chunk_" + i);
+            if (file.exists()) {
+                paths.add(Paths.get(
+                        "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net) (1).mkv"
+                                + "_chunk_" + i));
+            } else {
+                break;
+            }
+        }
+
+        Path outputPath = Paths.get(
+                "C:\\Users\\mokai\\OneDrive\\Desktop\\video-project\\test-video\\hisense-microcosmic-ecology-uhd-(www.demolandia.net).mkv");
+        mergeFiles(paths, outputPath);
+
+        return ResponseEntity.ok("병합완료");
+
+    }
+
+    /**
+     * 여러 파일을 하나의 파일로 병합합니다.
+     * 
+     * @param chunkPaths 병합할 파일들의 경로 리스트
+     * @param outputPath 결과 파일의 경로
+     * @throws IOException 파일 I/O 중 발생하는 예외를 처리합니다.
+     */
+    public static void mergeFiles(List<Path> chunkPaths, Path outputPath) throws IOException {
+        try (FileChannel outputChannel = FileChannel.open(outputPath, StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE)) {
+            for (Path chunkPath : chunkPaths) {
+                try (FileInputStream inputStream = new FileInputStream(chunkPath.toFile())) {
+                    FileChannel inputChannel = inputStream.getChannel();
+                    inputChannel.transferTo(0, inputChannel.size(), outputChannel);
+                }
+            }
+        }
+    }
+
+    public static long countFilesInDirectory(Path directory) throws IOException {
+        if (!Files.isDirectory(directory)) {
+            throw new IllegalArgumentException("입력된 경로는 디렉토리가 아닙니다.");
+        }
+
+        // 디렉토리 내의 파일 수를 카운트
+        long count = 0;
+
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory)) {
+            for (Path file : directoryStream) {
+                if (Files.isRegularFile(file)) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
     }
 
 }
