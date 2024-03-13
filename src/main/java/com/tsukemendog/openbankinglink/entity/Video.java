@@ -31,6 +31,10 @@ public class Video {
 
     private String url;
 
+    private String thumbnail; //썸네일
+
+    private String description;  //설명
+
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
