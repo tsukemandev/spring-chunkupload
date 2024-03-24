@@ -52,15 +52,10 @@ public class VideoController {
             return ResponseEntity.badRequest().body(resultMap);
         }
 
-
-
         Optional<Video> vOptional = videoRepository.fintByTypeAndVideoId(categoryType, Long.parseLong(videoId));
         if (!vOptional.isPresent()) {
-            System.out.println("category1");
             return ResponseEntity.badRequest().body(resultMap);
-        } else {
-            System.out.println("category2");
-        }
+        } 
 
         resultMap.put("data", vOptional.get());
         return ResponseEntity.ok(resultMap);

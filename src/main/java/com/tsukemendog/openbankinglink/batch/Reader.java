@@ -80,6 +80,8 @@ public class Reader implements ItemReader<List<RssFeedItem>> {
 
         });
 
+        list.forEach(o ->  System.out.println("rss item : " + o.getTitle()));
+
         return list;
 
     }

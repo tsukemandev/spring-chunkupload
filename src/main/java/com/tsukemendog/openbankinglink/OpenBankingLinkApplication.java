@@ -59,45 +59,14 @@ public class OpenBankingLinkApplication {
     @Profile("dev")
     public CommandLineRunner demo(CustomerRepository repository, RssFeedRepository rssFeedRepository, CategoryRepository categoryRepository, VideoRepository videoRepository) {
         return (args) -> {
-            // save a few customers
-            repository.save(new Customer("Jack", "Bauer"));
-            repository.save(new Customer("Chloe", "O'Brian"));
-            repository.save(new Customer("Kim", "Bauer"));
-            repository.save(new Customer("David", "Palmer"));
-            repository.save(new Customer("Michelle", "Dessler"));
-
-            // fetch all customers
-            log.info("Customers found with findAll():");
-            log.info("-------------------------------");
-            repository.findAll().forEach(customer -> {
-                log.info(customer.toString());
-            });
-            log.info("");
-
-            // fetch an individual customer by ID
-            Customer customer = repository.findById(1L);
-            log.info("Customer found with findById(1L):");
-            log.info("--------------------------------");
-            log.info(customer.toString());
-            log.info("");
-
-            // fetch customers by last name
-            log.info("Customer found with findByLastName('Bauer'):");
-            log.info("--------------------------------------------");
-            repository.findByLastName("Bauer").forEach(bauer -> {
-                log.info(bauer.toString());
-            });
-
    
             Category category1 = categoryRepository.save(new Category("영화", "movie", 1L));
             Category category2 = categoryRepository.save(new Category("애니메이션", "anime", 2L));
 
-            videoRepository.save(Video.builder().title("테스트 영화1").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category1).build());
-            videoRepository.save(Video.builder().title("테스트 영화2").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category1).build());
+            videoRepository.save(Video.builder().title("테스트 영화1").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category1).thumbnail("https://d1buzuj0s6bbq3.cloudfront.net/thumbnail/onepiece-noodle/b-33.jpg").build());
+            videoRepository.save(Video.builder().title("테스트 영화2").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category1).thumbnail("https://d1buzuj0s6bbq3.cloudfront.net/thumbnail/onepiece-noodle/b-33.jpg").build());
+            videoRepository.save(Video.builder().title("테스트 애니메1").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category2).thumbnail("https://d1buzuj0s6bbq3.cloudfront.net/thumbnail/onepiece-noodle/b-33.jpg").build());
 
-            videoRepository.save(Video.builder().title("테스트 애니메1").url("https://d1buzuj0s6bbq3.cloudfront.net/hungry-days-bump-of-chicken.m3u8").category(category2).build());
-
-            log.info("categoryRepository");
         };
     }
 
